@@ -24,7 +24,7 @@ namespace stan {
         _subarguments.push_back(new arg_variational_algo());
         _subarguments.push_back(new arg_variational_iter());
         _subarguments.push_back(new arg_variational_num_samples("grad_samples",
-          "Number of samples for Monte Carlo estimate of gradients", 1));
+          "Number of samples for Monte Carlo estimate of gradients", 256));
         _subarguments.push_back(new arg_variational_num_samples
                                 ("elbo_samples",
                                  "Number of samples for Monte Carlo estimate "
@@ -33,7 +33,7 @@ namespace stan {
         _subarguments.push_back(new arg_variational_eta());
         _subarguments.push_back(new arg_variational_adapt());
         _subarguments.push_back(new arg_tolerance("tol_rel_obj",
-          "Convergence tolerance on the relative norm of the objective", 1e-2));
+          "Convergence tolerance on the relative norm of the objective", 1e-4));
         _subarguments.push_back(new arg_variational_eval_elbo("eval_elbo",
           "Evaluate ELBO every Nth iteration", 100));
         _subarguments.push_back(new arg_variational_output_samples

@@ -223,6 +223,9 @@ namespace stan {
 
         bool do_more_tuning = true;
         int eta_sequence_index = 0;
+
+        int g_evals = 0;
+
         while (do_more_tuning) {
           // Try next eta
           eta = eta_sequence[eta_sequence_index];
@@ -240,6 +243,7 @@ namespace stan {
             // We'll try a smaller eta.
             try {
               calc_ELBO_grad(variational, elbo_grad, message_writer);
+              g_evals += 1;
             } catch (const std::domain_error& e) {
               elbo_grad.set_to_zero();
             }
@@ -309,6 +313,8 @@ namespace stan {
           ++eta_sequence_index;
           variational = Q(cont_params_);
         }
+
+        std::cout << "[ADVI] ADAPT gradient evals: " << g_evals << std::endl;
         return eta_best;
       }
 
@@ -378,11 +384,16 @@ namespace stan {
         clock_t end;
         double delta_t;
 
+        elbo = calc_ELBO(variational, message_writer);
+
+        int g_evals = 0;
+
         // Main loop
         bool do_more_iterations = true;
         for (int iter_counter = 1; do_more_iterations; ++iter_counter) {
           // Compute gradient using Monte Carlo integration
           calc_ELBO_grad(variational, elbo_grad, message_writer);
+          g_evals += n_monte_carlo_grad_;
 
           // Update step-size
           if (iter_counter == 1) {
@@ -400,6 +411,7 @@ namespace stan {
           // Check for convergence every "eval_elbo_"th iteration
           if (iter_counter % eval_elbo_ == 0) {
             elbo_prev = elbo;
+            std::cout << "ELBO: " << elbo << std::endl;
             elbo = calc_ELBO(variational, message_writer);
             if (elbo > elbo_best)
               elbo_best = elbo;
@@ -469,6 +481,8 @@ namespace stan {
             do_more_iterations = false;
           }
         }
+        std::cout << "[ADVI] SGD gradient evals: " << g_evals << std::endl;
+        std::cout << "[ADVI] final ELBO: " << elbo << std::endl;
       }
 
       /**
@@ -483,7 +497,7 @@ namespace stan {
        * @param  parameter_writer   writer for parameters (typically to file)
        * @param  diagnostic_writer writer for diagnostic information
        */
-      int run(double eta, bool adapt_engaged, int adapt_iterations,
+      Q do_run(double eta, bool adapt_engaged, int adapt_iterations,
               double tol_rel_obj, int max_iterations,
               interface_callbacks::writer::base_writer& message_writer,
               interface_callbacks::writer::base_writer& parameter_writer,
@@ -502,9 +516,10 @@ namespace stan {
           parameter_writer(ss.str());
         }
 
-        stochastic_gradient_ascent(variational, eta,
-                                   tol_rel_obj, max_iterations,
-                                   message_writer, diagnostic_writer);
+        if (max_iterations > 0)
+            stochastic_gradient_ascent(variational, eta,
+                                       tol_rel_obj, max_iterations,
+                                       message_writer, diagnostic_writer);
 
         // Write mean of posterior approximation on first output line
         cont_params_ = variational.mean();
@@ -537,10 +552,22 @@ namespace stan {
         }
         message_writer("COMPLETED.");
 
-        return stan::services::error_codes::OK;
+        return variational;
       }
 
-      // TODO(akucukelbir): move these things to stan math and test there
+      int run(double eta, bool adapt_engaged, int adapt_iterations,
+              double tol_rel_obj, int max_iterations,
+              interface_callbacks::writer::base_writer& message_writer,
+              interface_callbacks::writer::base_writer& parameter_writer,
+              interface_callbacks::writer::base_writer& diagnostic_writer)
+        const {
+
+        do_run(eta, adapt_engaged, adapt_iterations, tol_rel_obj, max_iterations,
+               message_writer, parameter_writer, diagnostic_writer);
+
+        return stan::services::error_codes::OK;
+      }
+       // TODO(akucukelbir): move these things to stan math and test there
 
       /**
        * Compute the median of a circular buffer.

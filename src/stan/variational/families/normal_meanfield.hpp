@@ -19,7 +19,7 @@ namespace stan {
      */
     class normal_meanfield : public base_family {
     private:
-      /** 
+      /**
        * Mean vector.
        */
       Eigen::VectorXd mu_;
@@ -57,7 +57,7 @@ namespace stan {
        */
       explicit normal_meanfield(const Eigen::VectorXd& cont_params)
         : mu_(cont_params),
-          omega_(Eigen::VectorXd::Zero(cont_params.size())),
+          omega_(-1.0 * Eigen::VectorXd::Ones(cont_params.size())),
           dimension_(cont_params.size()) {
       }
 
@@ -119,7 +119,7 @@ namespace stan {
 
       /**
        * Set the log standard deviation vector to the specified
-       * value. 
+       * value.
        *
        * @param[in] omega Log standard deviation vector.
        * @throw std::domain_error If the log standard deviation
@@ -201,7 +201,7 @@ namespace stan {
        * @param[in] rhs Approximation from which to gather the mean
        * and log standard deviation vectors.
        * @return This approximation after adding the specified
-       * approximation. 
+       * approximation.
        * @throw std::domain_error If the size of the specified
        * approximation does not match the size of this approximation.
        */
@@ -219,7 +219,7 @@ namespace stan {
       /**
        * Return this approximation after elementwise division by the
        * specified approximation's mean and log standard deviation
-       * vectors. 
+       * vectors.
        *
        * @param[in] rhs Approximation from which to gather the mean
        * and log standard deviation vectors.
@@ -259,7 +259,7 @@ namespace stan {
       /**
        * Return this approximation after multiplying by the specified
        * scalar to each entry in the mean and log standard deviation
-       * vectors. 
+       * vectors.
        *
        * <b>Warning:</b> No finiteness check is made on the scalar, so
        * it may introduce NaNs.
@@ -275,10 +275,10 @@ namespace stan {
       }
 
       /**
-       * Returns the mean vector for this approximation.  
-       * 
+       * Returns the mean vector for this approximation.
+       *
        * See: <code>mu()</code>.
-       * 
+       *
        * @return Mean vector for this approximation.
        */
       const Eigen::VectorXd& mean() const {

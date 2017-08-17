@@ -5,6 +5,7 @@
 
 #include <stan/services/arguments/arg_variational_meanfield.hpp>
 #include <stan/services/arguments/arg_variational_fullrank.hpp>
+#include <stan/services/arguments/arg_variational_trustvi.hpp>
 
 namespace stan {
 
@@ -18,6 +19,7 @@ namespace stan {
 
         _values.push_back(new arg_variational_meanfield());
         _values.push_back(new arg_variational_fullrank());
+        _values.push_back(new arg_variational_trustvi());
 
         _default_cursor = 0;
         _cursor = _default_cursor;
